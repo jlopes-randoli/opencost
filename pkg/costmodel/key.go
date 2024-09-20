@@ -103,9 +103,13 @@ func resultPodKey(res *prom.QueryResult, clusterLabel, namespaceLabel string) (p
 	}
 	key.Cluster = cluster
 
-	namespace, err := res.GetString(namespaceLabel)
+	var namespace string
+	namespace, err = res.GetString(namespaceLabel)
 	if err != nil {
-		return key, err
+		namespace, err = res.GetString("namespace")
+		if err != nil {
+			return key, err
+		}
 	}
 	key.Namespace = namespace
 

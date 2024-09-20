@@ -1933,13 +1933,22 @@ func buildPVCMap(resolution time.Duration, pvcMap map[pvcKey]*pvc, pvMap map[pvK
 			cluster = env.GetClusterID()
 		}
 
-		values, err := res.GetStrings("persistentvolumeclaim", "storageclass", "volumename", env.GetPromNamespaceLabel())
+		var namespace string
+		namespace, err = res.GetString(env.GetPromNamespaceLabel())
+		if err != nil {
+			namespace, err = res.GetString("namespace")
+			if err != nil {
+				log.DedupedWarningf(10, "CostModel.ComputeAllocation: pvc info query result missing field: %s", err)
+				continue
+			}
+		}
+
+		values, err := res.GetStrings("persistentvolumeclaim", "storageclass", "volumename")
 		if err != nil {
 			log.DedupedWarningf(10, "CostModel.ComputeAllocation: pvc info query result missing field: %s", err)
 			continue
 		}
 
-		namespace := values[env.GetPromNamespaceLabel()]
 		name := values["persistentvolumeclaim"]
 		volume := values["volumename"]
 		storageClass := values["storageclass"]
