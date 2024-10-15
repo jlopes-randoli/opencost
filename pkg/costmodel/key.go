@@ -160,7 +160,10 @@ func resultNamespaceKey(res *prom.QueryResult, clusterLabel, namespaceLabel stri
 
 	namespace, err := res.GetString(namespaceLabel)
 	if err != nil {
-		return key, err
+		namespace, err = res.GetString("namespace")
+		if err != nil {
+			return key, err
+		}
 	}
 	key.Namespace = namespace
 
@@ -204,7 +207,10 @@ func resultControllerKey(controllerKind string, res *prom.QueryResult, clusterLa
 
 	namespace, err := res.GetString(namespaceLabel)
 	if err != nil {
-		return key, err
+		namespace, err = res.GetString("namespace")
+		if err != nil {
+			return key, err
+		}
 	}
 	key.Namespace = namespace
 
@@ -290,7 +296,10 @@ func resultServiceKey(res *prom.QueryResult, clusterLabel, namespaceLabel, servi
 
 	namespace, err := res.GetString(namespaceLabel)
 	if err != nil {
-		return key, err
+		namespace, err = res.GetString("namespace")
+		if err != nil {
+			return key, err
+		}
 	}
 	key.Namespace = namespace
 
@@ -378,7 +387,10 @@ func resultPVCKey(res *prom.QueryResult, clusterLabel, namespaceLabel, pvcLabel 
 
 	namespace, err := res.GetString(namespaceLabel)
 	if err != nil {
-		return key, err
+		namespace, err = res.GetString("namespace")
+		if err != nil {
+			return key, err
+		}
 	}
 	key.Namespace = namespace
 

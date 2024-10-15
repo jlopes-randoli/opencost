@@ -139,8 +139,11 @@ func applyPodResults(window opencost.Window, resolution time.Duration, podMap ma
 
 		namespace, err := res.GetString(env.GetPromNamespaceLabel())
 		if err != nil {
-			log.Warnf("CostModel.ComputeAllocation: minutes query result missing field: %s", err)
-			continue
+			namespace, err = res.GetString("namespace")
+			if err != nil {
+				log.Warnf("CostModel.ComputeAllocation: minutes query result missing field: %s", err)
+				continue
+			}
 		}
 
 		podName, err := res.GetString(env.GetPromPodLabel())
@@ -673,8 +676,11 @@ func applyGPUUsageAvg(podMap map[podKey]*pod, resGPUUsageAvg []*prom.QueryResult
 		for _, thisPod := range pods {
 			container, err := res.GetString(env.GetPromContainerLabel())
 			if err != nil {
-				log.DedupedWarningf(10, "CostModel.ComputeAllocation: GPU usage avg query result missing 'container': %s", key)
-				continue
+				container, err = res.GetString("container")
+				if err != nil {
+					log.DedupedWarningf(10, "CostModel.ComputeAllocation: GPU usage avg query result missing 'container': %s", key)
+					continue
+				}
 			}
 			if _, ok := thisPod.Allocations[container]; !ok {
 				thisPod.appendContainer(container)
@@ -959,7 +965,10 @@ func resToNamespaceAnnotations(resNamespaceAnnotations []*prom.QueryResult) map[
 	for _, res := range resNamespaceAnnotations {
 		namespace, err := res.GetString(env.GetPromNamespaceLabel())
 		if err != nil {
-			continue
+			namespace, err = res.GetString("namespace")
+			if err != nil {
+				continue
+			}
 		}
 
 		if _, ok := namespaceAnnotations[namespace]; !ok {
@@ -1320,7 +1329,10 @@ func resToPodReplicaSetMap(resPodsWithReplicaSetOwner []*prom.QueryResult, resRe
 
 		pod, err := res.GetString(env.GetPromPodLabel())
 		if err != nil {
-			log.Warnf("CostModel.ComputeAllocation: ReplicaSet result without pod: %s", controllerKey)
+			pod, err = res.GetString("pod")
+			if err != nil {
+				log.Warnf("CostModel.ComputeAllocation: ReplicaSet result without pod: %s", controllerKey)
+			}
 		}
 
 		key := newPodKey(controllerKey.Cluster, controllerKey.Namespace, pod)
@@ -2050,13 +2062,21 @@ func buildPodPVCMap(podPVCMap map[podKey][]*pvc, pvMap map[pvKey]*pv, pvcMap map
 			}
 		}
 
-		values, err := res.GetStrings("persistentvolume", "persistentvolumeclaim", env.GetPromNamespaceLabel())
+		namespace, err := res.GetString(env.GetPromNamespaceLabel())
+		if err != nil {
+			namespace, err = res.GetString("namespace")
+			if err != nil {
+				log.DedupedWarningf(5, "CostModel.ComputeAllocation: pvc allocation query result missing field: %s", err)
+				continue
+			}
+		}
+
+		values, err := res.GetStrings("persistentvolume", "persistentvolumeclaim")
 		if err != nil {
 			log.DedupedWarningf(5, "CostModel.ComputeAllocation: pvc allocation query result missing field: %s", err)
 			continue
 		}
 
-		namespace := values[env.GetPromNamespaceLabel()]
 		name := values["persistentvolumeclaim"]
 		volume := values["persistentvolume"]
 
